@@ -1,5 +1,5 @@
 package com.castlecoach.app.health
-
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,11 +31,15 @@ fun StepsCard() {
     val client = remember { HealthConnectClient.getOrCreate(context) }
     val scope = rememberCoroutineScope()
 
+    // Health Connect availability: check if the app is installed
     val hcAvailable = remember {
-        HealthConnectClient.getSdkStatus(
-            context,
-            HEALTH_CONNECT_PACKAGE
-        ) == HealthConnectClient.SDK_AVAILABLE
+        val pm = context.packageManager
+        try {
+            pm.getPackageInfo("com.google.android.apps.healthdata", 0)
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
     }
 
     val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
@@ -44,9 +48,10 @@ fun StepsCard() {
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // 1.0.x: use the built-in permission contract (returns Set<String>)
+    // Request permissions (alpha11 uses the result contract API)
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract()
+        contract = androidx.health.connect.client.permission.PermissionController
+            .createRequestPermissionResultContract()
     ) { granted: Set<String> ->
         hasPermission = stepsPermission in granted
         if (hasPermission) {
@@ -78,7 +83,6 @@ fun StepsCard() {
                     Text("Connect Health Connect to show steps.")
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = {
-                        // Launch the permission request
                         permissionLauncher.launch(setOf(stepsPermission))
                     }) { Text("Connect") }
                 }
