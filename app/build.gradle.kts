@@ -67,7 +67,6 @@ implementation("androidx.health.connect:connect-client:1.0.0-alpha11")
 val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
 implementation(composeBom)
 androidTestImplementation(composeBom)
-implementation(platform("androidx.health:health-bom:1.0.0-alpha05"))
 
 
 implementation("androidx.room:room-runtime:2.6.1")
