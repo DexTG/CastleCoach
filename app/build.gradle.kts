@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application") version "8.6.1"
     id("org.jetbrains.kotlin.android") version "1.9.24"
+    kotlin("kapt")
 }
 
 
@@ -49,6 +50,17 @@ packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 
 
 dependencies {
+
+val room = "2.6.1"
+implementation("androidx.room:room-ktx:$room")
+kapt("androidx.room:room-compiler:$room") // if using KAPT
+// OR KSP:
+// ksp("androidx.room:room-compiler:$room")
+
+// Java Time backport for older devices (optional if minSdk >= 26)
+implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
+
 val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
 implementation(composeBom)
 androidTestImplementation(composeBom)
