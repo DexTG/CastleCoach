@@ -22,12 +22,13 @@ import androidx.health.connect.client.time.TimeRangeFilter
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
-
-// Top-level: provider package for 1.0.0-alpha*
-private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+
+// Top-level: provider package for 1.0.0-alpha*
+private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
+
 @Composable
 fun StepsCard() {
     val context = LocalContext.current
