@@ -1,26 +1,44 @@
 name: Android CI
-on:
-push:
-branches: [ main ]
-pull_request:
-branches: [ main ]
 
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
 
 jobs:
-build:
-runs-on: ubuntu-latest
-steps:
-- uses: actions/checkout@v4
-- name: Set up JDK
-uses: actions/setup-java@v4
-with:
-distribution: 'temurin'
-java-version: '17'
-- name: Gradle build
-uses: gradle/actions/setup-gradle@v3
-- run: ./gradlew assembleDebug --stacktrace
-- name: Upload APK
-uses: actions/upload-artifact@v4
-with:
-name: CastleCoach-debug-apk
-path: app/build/outputs/apk/debug/app-debug.apk
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Install a system Gradle to create the wrapper
+      - name: Setup Gradle (no wrapper yet)
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
+
+      - name: Generate Gradle wrapper
+        run: gradle wrapper
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CastleCoach-debug-apk
+          path: app/build/outputs/apk/**/app-*-debug.apk
+          if-no-files-found: error
