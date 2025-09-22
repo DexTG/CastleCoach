@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
@@ -16,11 +17,10 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import androidx.health.connect.client.permissions.HealthPermission
+import androidx.health.connect.client.permission.HealthPermission
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import androidx.compose.foundation.layout.padding
 
 @Composable
 fun StepsCard() {
@@ -28,11 +28,9 @@ fun StepsCard() {
     val client = remember { HealthConnectClient.getOrCreate(context) }
     val scope = rememberCoroutineScope()
 
-    // ✅ Add these two lines right after you have `context`
     val hcAvailable = remember {
         HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
     }
-
     val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
 
     var hasPermission by remember { mutableStateOf(false) }
@@ -108,7 +106,6 @@ private suspend fun loadTodaySteps(
                 )
             )
         )
-
         onResult(response.records.sumOf { it.count })
     } catch (t: Throwable) {
         onError(t.message ?: "Unknown error")
