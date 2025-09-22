@@ -1,5 +1,6 @@
 package com.castlecoach.app.health
 import android.content.pm.PackageManager
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.HealthPermission          // ✅ alpha11
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController // <- correct PermissionController
 import androidx.health.connect.client.permission.HealthPermission // <- 1.0.x path
@@ -49,17 +51,16 @@ fun StepsCard() {
     var error by remember { mutableStateOf<String?>(null) }
 
     // Request permissions (alpha11 uses the result contract API)
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = androidx.health.connect.client.permission.PermissionController
-            .createRequestPermissionResultContract()
-    ) { granted: Set<String> ->
-        hasPermission = stepsPermission in granted
-        if (hasPermission) {
-            scope.launch {
-                loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
-            }
+   val permissionLauncher = rememberLauncherForActivityResult(
+    contract = PermissionController.createRequestPermissionResultContract()
+) { granted: Set<String> ->
+    hasPermission = stepsPermission in granted
+    if (hasPermission) {
+        scope.launch {
+            loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
         }
     }
+}
 
     LaunchedEffect(Unit) {
         if (hcAvailable) {
