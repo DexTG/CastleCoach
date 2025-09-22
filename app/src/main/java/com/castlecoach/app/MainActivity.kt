@@ -16,9 +16,12 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        com.castlecoach.app.plan.DailyScheduler.scheduleToday(this)
+
         enableEdgeToEdge()
         setContent {
-            MaterialTheme {                      // ⬅️ use MaterialTheme directly
+            MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     HomeScreen()
                 }
