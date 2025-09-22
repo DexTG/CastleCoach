@@ -13,7 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.HealthPermission          // ✅ alpha11
+import androidx.health.connect.client.permission.HealthPermission // <-- use this one
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController // <- correct PermissionController
 import androidx.health.connect.client.records.StepsRecord
@@ -33,15 +33,15 @@ fun StepsCard() {
     val scope = rememberCoroutineScope()
 
     // Health Connect availability: check if the app is installed
-    val hcAvailable = remember {
-        val pm = context.packageManager
-        try {
-            pm.getPackageInfo("com.google.android.apps.healthdata", 0)
-            true
-        } catch (_: PackageManager.NameNotFoundException) {
-            false
-        }
+ val hcAvailable = remember {
+    val pm = context.packageManager
+    try {
+        pm.getPackageInfo(HEALTH_CONNECT_PACKAGE, 0)
+        true
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
     }
+}
 
     val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
 
@@ -50,14 +50,12 @@ fun StepsCard() {
     var error by remember { mutableStateOf<String?>(null) }
 
     // Request permissions (alpha11 uses the result contract API)
-   val permissionLauncher = rememberLauncherForActivityResult(
+val permissionLauncher = rememberLauncherForActivityResult<Set<String>, Set<String>>(
     contract = PermissionController.createRequestPermissionResultContract()
 ) { granted: Set<String> ->
     hasPermission = stepsPermission in granted
     if (hasPermission) {
-        scope.launch {
-            loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
-        }
+        scope.launch { loadTodaySteps(client, onResult = { steps = it }, onError = { error = it }) }
     }
 }
 
