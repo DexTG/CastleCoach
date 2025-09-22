@@ -1,88 +1,133 @@
 package com.castlecoach.app
-}
-}
 
+import android.os.Bundle
+import android.os.SystemClock
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import com.castlecoach.app.ui.theme.CastleCoachTheme
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            CastleCoachTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    HomeScreen()
+                }
+            }
+        }
+    }
+}
 
 @Composable
-private fun TimeField(label: String, value: Int, onChange: (Int)->Unit) {
-var text by remember { mutableStateOf(value.toString().padStart(2,'0')) }
-OutlinedTextField(
-value = text,
-onValueChange = {
-text = it.take(2).filter { c -> c.isDigit() }
-onChange(text.toIntOrNull() ?: 0)
-},
-label = { Text(label) },
-modifier = Modifier.width(100.dp)
-)
+private fun HydrationChip(targetMl: Int, drankMl: Int, onAdd: (Int) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AssistChip(onClick = { onAdd(250) }, label = { Text("+250 ml") })
+        AssistChip(onClick = { onAdd(500) }, label = { Text("+500 ml") })
+        Text(
+            text = "Hydration: $drankMl / $targetMl ml",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }
-
 
 @Composable
-fun TimersScreen(onBack: ()->Unit) {
-var stopwatchRunning by remember { mutableStateOf(false) }
-var stopwatchBase by remember { mutableStateOf(0L) }
-val chronometer = remember { androidx.compose.runtime.mutableStateOf(SystemClock.elapsedRealtime()) }
+private fun StopwatchCard() {
+    var running by remember { mutableStateOf(false) }
+    var base by remember { mutableStateOf(SystemClock.elapsedRealtime()) }
+    var elapsedMs by remember { mutableStateOf(0L) }
 
+    LaunchedEffect(running) {
+        while (running) {
+            elapsedMs = SystemClock.elapsedRealtime() - base
+            delay(50)
+        }
+    }
 
-var timerSeconds by remember { mutableStateOf(60) }
-var timerRemaining by remember { mutableStateOf(60) }
-var timerRunning by remember { mutableStateOf(false) }
-
-
-LaunchedEffect(timerRunning) {
-while (timerRunning && timerRemaining > 0) {
-kotlinx.coroutines.delay(1000)
-timerRemaining -= 1
-}
-if (timerRunning) timerRunning = false
-}
-
-
-Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-Button(onClick = onBack) { Text("Back") }
-Text("Timers & Stopwatch", style = MaterialTheme.typography.titleLarge)
-}
-
-
-// Stopwatch
-ElevatedCard(Modifier.fillMaxWidth()) {
-Column(Modifier.padding(12.dp)) {
-Text("Stopwatch", style = MaterialTheme.typography.titleMedium)
-val elapsed = if (stopwatchRunning) (SystemClock.elapsedRealtime() - stopwatchBase)/1000 else (chronometer.value - stopwatchBase)/1000
-Text("${elapsed}s", style = MaterialTheme.typography.headlineMedium)
-Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-Button(onClick = {
-stopwatchBase = SystemClock.elapsedRealtime()
-stopwatchRunning = true
-}) { Text("Start") }
-Button(onClick = { stopwatchRunning = false; chronometer.value = SystemClock.elapsedRealtime() }) { Text("Stop") }
-Button(onClick = { stopwatchRunning = false; stopwatchBase = SystemClock.elapsedRealtime(); chronometer.value = stopwatchBase }) { Text("Reset") }
-}
-}
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Stopwatch", style = MaterialTheme.typography.titleMedium)
+            Text(text = "%02d:%02d.%02d".format(
+                (elapsedMs / 1000) / 60,
+                (elapsedMs / 1000) % 60,
+                (elapsedMs % 1000) / 10
+            ))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    base = SystemClock.elapsedRealtime()
+                    running = true
+                }) { Text("Start") }
+                Button(onClick = { running = false }) { Text("Pause") }
+                Button(onClick = {
+                    running = false
+                    elapsedMs = 0L
+                }) { Text("Reset") }
+            }
+        }
+    }
 }
 
+@Composable
+private fun HomeScreen() {
+    var note by remember { mutableStateOf("") }
+    var waterGoal by remember { mutableStateOf(2500) }
+    var waterDrank by remember { mutableStateOf(0) }
 
-// Timer
-ElevatedCard(Modifier.fillMaxWidth()) {
-Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-Text("Countdown Timer", style = MaterialTheme.typography.titleMedium)
-OutlinedTextField(value = timerSeconds.toString(), onValueChange = {
-timerSeconds = it.filter(Char::isDigit).take(4).toIntOrNull() ?: 0
-}, label = { Text("Seconds") })
-Text("Remaining: ${timerRemaining}s", style = MaterialTheme.typography.headlineSmall)
-Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-Button(onClick = { timerRemaining = timerSeconds; timerRunning = true }) { Text("Start") }
-Button(onClick = { timerRunning = false }) { Text("Pause") }
-Button(onClick = { timerRunning = false; timerRemaining = timerSeconds }) { Text("Reset") }
-}
-Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-AssistChip(onClick = { timerSeconds = 20; timerRemaining = 20 }, label = { Text("20s hang") })
-AssistChip(onClick = { timerSeconds = 60; timerRemaining = 60 }, label = { Text("60s plank") })
-AssistChip(onClick = { timerSeconds = 90; timerRemaining = 90 }, label = { Text("90s carry") })
-}
-}
-}
-}
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Quick note", style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("How did training go?") }
+                )
+                Text(
+                    "Tip: Short, brisk hill sprints and ruck-walks are great right now.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Hydration", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = waterGoal.toString(),
+                        onValueChange = { v -> v.toIntOrNull()?.let { waterGoal = it } },
+                        label = { Text("Daily goal (ml)") },
+                        modifier = Modifier.width(160.dp)
+                    )
+                    Button(onClick = { waterDrank = 0 }) { Text("Reset") }
+                }
+                HydrationChip(targetMl = waterGoal, drankMl = waterDrank) { add ->
+                    waterDrank = (waterDrank + add).coerceAtMost(waterGoal)
+                }
+            }
+        }
+
+        StopwatchCard()
+    }
 }
