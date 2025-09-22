@@ -32,14 +32,8 @@ fun StepsCard() {
     val scope = rememberCoroutineScope()
 
     val hcAvailable = remember {
-        val pm = context.packageManager
-        try {
-            pm.getPackageInfo("com.google.android.apps.healthdata", 0)
-            true
-        } catch (_: PackageManager.NameNotFoundException) {
-            false
-        }
-    }
+    HealthConnectClient.isProviderAvailable(context)
+}
 
     // Only create the client if available
     val client = remember(hcAvailable) {
