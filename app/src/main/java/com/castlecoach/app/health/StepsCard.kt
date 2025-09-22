@@ -17,7 +17,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.permissions.HealthPermission
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
