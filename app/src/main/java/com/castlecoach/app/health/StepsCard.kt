@@ -25,7 +25,9 @@ import java.time.ZonedDateTime
 
 // Top-level: provider package for 1.0.0-alpha*
 private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
-
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 @Composable
 fun StepsCard() {
     val context = LocalContext.current
@@ -96,6 +98,28 @@ fun StepsCard() {
         }
     }
 }
+
+
+
+private fun openHealthConnectInstall(context: Context) {
+    val pkg = "com.google.android.apps.healthdata"
+    // Try Play Store app first
+    runCatching {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }.onFailure {
+        // Fallback to web Play Store
+        context.startActivity(
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://play.google.com/store/apps/details?id=$pkg")
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+}
+
 
 
 private suspend fun loadTodaySteps(
