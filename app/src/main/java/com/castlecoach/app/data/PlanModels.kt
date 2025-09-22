@@ -1,8 +1,8 @@
 package com.castlecoach.app.data
 
 import java.time.*
+import com.castlecoach.app.data.ItemType
 
-enum class ItemType { MEAL, SNACK, HYDRATE, WORKOUT, WALK }
 
 data class PlanItem(
     val at: LocalDateTime,
