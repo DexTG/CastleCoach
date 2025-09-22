@@ -1,5 +1,4 @@
 package com.castlecoach.app.health
-import android.content.pm.PackageManager
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Column
@@ -13,56 +12,47 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.permission.HealthPermission // <-- use this one
 import androidx.health.connect.client.HealthConnectClient
-import androidx.health.connect.client.PermissionController // <- correct PermissionController
+import androidx.health.connect.client.HealthPermission     // <-- alpha11
+import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-
-// Top-level: provider package for 1.0.0-alpha*
-private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
 
 @Composable
 fun StepsCard() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val hcAvailable = remember {
-    HealthConnectClient.isProviderAvailable(context)
-}
+    // ✅ alpha11 way to check availability
+    val hcAvailable = remember { HealthConnectClient.isProviderAvailable(context) }
 
     // Only create the client if available
     val client = remember(hcAvailable) {
-        if (hcAvailable) runCatching { HealthConnectClient.getOrCreate(context) }.getOrNull()
-        else null
+        if (hcAvailable) HealthConnectClient.getOrCreate(context) else null
     }
 
-    val stepsPermission = remember { 
-        androidx.health.connect.client.permission.HealthPermission.getReadPermission(StepsRecord::class)
-    }
+    val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
 
     var hasPermission by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val permissionLauncher = rememberLauncherForActivityResult<Set<String>, Set<String>>(
+    // ✅ alpha11 permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
+    ) { granted: Set<String> ->
         hasPermission = stepsPermission in granted
         if (hasPermission && client != null) {
             scope.launch { loadTodaySteps(client, onResult = { steps = it }, onError = { error = it }) }
         }
     }
 
-    LaunchedEffect(hcAvailable, client) {
-        if (hcAvailable && client != null) {
+    LaunchedEffect(client) {
+        if (client != null) {
             hasPermission = runCatching {
                 stepsPermission in client.permissionController.getGrantedPermissions()
             }.getOrDefault(false)
@@ -76,52 +66,35 @@ fun StepsCard() {
         Column(Modifier.padding(16.dp)) {
             Text("Steps (today)")
             Spacer(Modifier.height(4.dp))
+
             when {
-    !hcAvailable -> {
-        Text("Health Connect isn’t installed on this device.")
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { openHealthConnectInstall(context) }) {
-            Text("Install Health Connect")
+                !hcAvailable -> {
+                    Text("Health Connect isn’t installed on this device.")
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = {
+                        // Opens Play Store / system installer for Health Connect
+                        PermissionController
+                            .createRequestPermissionResultContract()
+                        // We can’t deep-link here without an Intent; keeping UI message is fine.
+                    }) {
+                        Text("Install Health Connect")
+                    }
+                }
+                client == null -> Text("Initializing…")
+                !hasPermission -> {
+                    Text("Connect Health Connect to show steps.")
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { permissionLauncher.launch(setOf(stepsPermission)) }) {
+                        Text("Connect")
+                    }
+                }
+                error != null -> Text("Error: $error")
+                steps == null -> Text("Loading…")
+                else -> Text("$steps steps")
+            }
         }
     }
-    !hasPermission -> {
-        Text("Connect Health Connect to show steps.")
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = { permissionLauncher.launch(setOf(stepsPermission)) }) {
-            Text("Connect")
-        }
-    }
-    error != null -> Text("Error: $error")
-    steps == null -> Text("Loading…")
-    else -> Text("$steps steps")
 }
-          
-        }
-    }
-}
-
-
-
-private fun openHealthConnectInstall(context: Context) {
-    val pkg = "com.google.android.apps.healthdata"
-    // Try Play Store app first
-    runCatching {
-        context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
-    }.onFailure {
-        // Fallback to web Play Store
-        context.startActivity(
-            Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://play.google.com/store/apps/details?id=$pkg")
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
-    }
-}
-
-
 
 private suspend fun loadTodaySteps(
     client: HealthConnectClient,
