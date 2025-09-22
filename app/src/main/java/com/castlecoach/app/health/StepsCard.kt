@@ -27,27 +27,32 @@ fun StepsCard() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // ✅ alpha11 way to check availability
-    val hcAvailable = remember { HealthConnectClient.isProviderAvailable(context) }
+    val hcAvailable = remember {
+        HealthConnectClient.getSdkStatus(
+            context,
+            HealthConnectClient.DEFAULT_PROVIDER_PACKAGE_NAME
+        ) == HealthConnectClient.SDK_AVAILABLE
+    }
 
-    // Only create the client if available
+    // Only create client if available
     val client = remember(hcAvailable) {
         if (hcAvailable) HealthConnectClient.getOrCreate(context) else null
     }
 
-    val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
+    val stepsPermission = remember {
+        HealthPermission.getReadPermission(StepsRecord::class)
+    }
 
     var hasPermission by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // ✅ alpha11 permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = PermissionController.createRequestPermissionResultContract()
     ) { granted: Set<String> ->
         hasPermission = stepsPermission in granted
         if (hasPermission && client != null) {
-            scope.launch { loadTodaySteps(client, onResult = { steps = it }, onError = { error = it }) }
+            scope.launch { loadTodaySteps(client, { steps = it }, { error = it }) }
         }
     }
 
@@ -57,7 +62,7 @@ fun StepsCard() {
                 stepsPermission in client.permissionController.getGrantedPermissions()
             }.getOrDefault(false)
             if (hasPermission) {
-                loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
+                loadTodaySteps(client, { steps = it }, { error = it })
             }
         }
     }
@@ -72,13 +77,13 @@ fun StepsCard() {
                     Text("Health Connect isn’t installed on this device.")
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = {
-                        // Opens Play Store / system installer for Health Connect
-                        PermissionController
-                            .createRequestPermissionResultContract()
-                        // We can’t deep-link here without an Intent; keeping UI message is fine.
-                    }) {
-                        Text("Install Health Connect")
-                    }
+                        // Try to open Health Connect in Play Store
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = Uri.parse("market://details?id=com.google.android.apps.healthdata")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        runCatching { context.startActivity(intent) }
+                    }) { Text("Install Health Connect") }
                 }
                 client == null -> Text("Initializing…")
                 !hasPermission -> {
