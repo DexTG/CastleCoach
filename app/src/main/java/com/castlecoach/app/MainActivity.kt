@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import com.castlecoach.app.health.StepsCard
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,5 +129,6 @@ private fun HomeScreen() {
         }
 
         StopwatchCard()
+        StepsCard()
     }
 }
