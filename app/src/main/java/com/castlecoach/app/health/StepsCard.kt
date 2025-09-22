@@ -28,37 +28,38 @@ fun StepsCard() {
     val client = remember { HealthConnectClient.getOrCreate(context) }
     val scope = rememberCoroutineScope()
 
-    // Permission for reading steps
+    // ✅ Add these two lines right after you have `context`
+    val hcAvailable = remember {
+        HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
+    }
+
     val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
 
     var hasPermission by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // Launcher for the Health Connect permission UI
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        // After the permissions UI closes, re-check permissions and, if granted, load steps
         scope.launch {
             hasPermission = runCatching {
                 stepsPermission in client.permissionController.getGrantedPermissions()
             }.getOrDefault(false)
-
             if (hasPermission) {
                 loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
             }
         }
     }
 
-    // Initial permission check + load
     LaunchedEffect(Unit) {
-        hasPermission = runCatching {
-            stepsPermission in client.permissionController.getGrantedPermissions()
-        }.getOrDefault(false)
-
-        if (hasPermission) {
-            loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
+        if (hcAvailable) {
+            hasPermission = runCatching {
+                stepsPermission in client.permissionController.getGrantedPermissions()
+            }.getOrDefault(false)
+            if (hasPermission) {
+                loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
+            }
         }
     }
 
@@ -68,6 +69,7 @@ fun StepsCard() {
             Spacer(Modifier.height(4.dp))
 
             when {
+                !hcAvailable -> Text("Health Connect isn’t available on this device.")
                 !hasPermission -> {
                     Text("Connect Health Connect to show steps.")
                     Spacer(Modifier.height(8.dp))
@@ -81,7 +83,7 @@ fun StepsCard() {
                 }
                 error != null -> Text("Error: $error")
                 steps == null -> Text("Loading…")
-                else -> Text("${steps} steps")
+                else -> Text("$steps steps")
             }
         }
     }
