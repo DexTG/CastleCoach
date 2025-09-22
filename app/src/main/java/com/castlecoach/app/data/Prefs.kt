@@ -1,48 +1,29 @@
 package com.castlecoach.app.data
 
-
 import android.content.Context
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
-import java.time.LocalDate
-import java.time.LocalTime
 
+val Context.userPrefs by preferencesDataStore("user_prefs")
 
-val Context.dataStore by preferencesDataStore("castlecoach")
-
-
-object PrefsKeys {
-val START_EPOCH = longPreferencesKey("start_epoch")
-val WORKOUT_ALARM_HOUR = intPreferencesKey("alarm_h")
-val WORKOUT_ALARM_MIN = intPreferencesKey("alarm_m")
+object PrefKeys {
+    val HYDRATION_GOAL = intPreferencesKey("hydration_goal_ml")
+    val HYDRATION_TODAY = intPreferencesKey("hydration_today_ml")
+    val STOPWATCH_BASE = longPreferencesKey("stopwatch_base_ms") // if you want to persist
 }
 
-
-suspend fun saveStartDate(ctx: Context, date: LocalDate) {
-ctx.dataStore.edit { it[PrefsKeys.START_EPOCH] = date.toEpochDay() }
+suspend fun setInt(context: Context, key: Preferences.Key<Int>, value: Int) {
+    context.userPrefs.edit { it[key] = value }
 }
-
-
-suspend fun getStartDate(ctx: Context): LocalDate? {
-val prefs = ctx.dataStore.data.first()
-return prefs[PrefsKeys.START_EPOCH]?.let { LocalDate.ofEpochDay(it) }
+suspend fun getInt(context: Context, key: Preferences.Key<Int>, def: Int = 0): Int {
+    val p = context.userPrefs.data.first()
+    return p[key] ?: def
 }
-
-
-suspend fun saveAlarmTime(ctx: Context, t: LocalTime) {
-ctx.dataStore.edit {
-it[PrefsKeys.WORKOUT_ALARM_HOUR] = t.hour
-it[PrefsKeys.WORKOUT_ALARM_MIN] = t.minute
+suspend fun setLong(context: Context, key: Preferences.Key<Long>, value: Long) {
+    context.userPrefs.edit { it[key] = value }
 }
-}
-
-
-suspend fun getAlarmTime(ctx: Context): LocalTime? {
-val p = ctx.dataStore.data.first()
-val h = p[PrefsKeys.WORKOUT_ALARM_HOUR] ?: return null
-val m = p[PrefsKeys.WORKOUT_ALARM_MIN] ?: return null
-return LocalTime.of(h,m)
+suspend fun getLong(context: Context, key: Preferences.Key<Long>, def: Long = 0L): Long {
+    val p = context.userPrefs.data.first()
+    return p[key] ?: def
 }
