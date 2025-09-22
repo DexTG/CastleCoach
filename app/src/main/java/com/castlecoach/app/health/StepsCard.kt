@@ -1,9 +1,9 @@
 package com.castlecoach.app.health
 
-import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -11,12 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
-import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.permissions.HealthPermission
-import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -30,17 +28,13 @@ fun StepsCard() {
         try {
             val client = HealthConnectClient.getOrCreate(context)
 
-            // Build permission set
-            val readSteps = HealthPermission.getReadPermission(StepsRecord::class)
-            val granted: Set<HealthPermission> = client.permissionController.getGrantedPermissions()
+            // Permissions: now compare Strings, not HealthPermission objects.
+            val readStepsPermission = HealthPermission.getReadPermission(StepsRecord::class)
+            val granted: Set<String> = client.permissionController.getGrantedPermissions()
 
-            if (readSteps !in granted) {
-                // In Compose, you normally launch the permission UI via Activity.
-                // If this Composable sits in an Activity, request like this:
-                PermissionController(context).createRequestPermissionResultContract()
-                // ^ In production you’d wire up a launcher. For CI builds, skip requesting.
-                // For now, just bail if not granted:
-                error = "Health Connect permission for steps not granted"
+            if (readStepsPermission !in granted) {
+                // In CI or first run without UI permission flow: show a message and stop.
+                error = "Health Connect steps permission not granted"
                 return@LaunchedEffect
             }
 
@@ -48,6 +42,7 @@ fun StepsCard() {
             val end: ZonedDateTime = ZonedDateTime.now(zone)
             val start: ZonedDateTime = end.toLocalDate().atStartOfDay(zone)
 
+            // Read today’s steps
             val response = client.readRecords(
                 ReadRecordsRequest(
                     StepsRecord::class,
