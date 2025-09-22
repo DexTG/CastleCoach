@@ -4,7 +4,9 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
     id("androidx.room") version "2.6.1"
 }
-
+room {
+    schemaDirectory("$projectDir/schemas")
+}
 
 android {
 namespace = "com.castlecoach.app"
