@@ -12,14 +12,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import com.castlecoach.app.ui.theme.CastleCoachTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CastleCoachTheme {
+            MaterialTheme {                      // ⬅️ use MaterialTheme directly
                 Surface(modifier = Modifier.fillMaxSize()) {
                     HomeScreen()
                 }
@@ -36,10 +35,7 @@ private fun HydrationChip(targetMl: Int, drankMl: Int, onAdd: (Int) -> Unit) {
     ) {
         AssistChip(onClick = { onAdd(250) }, label = { Text("+250 ml") })
         AssistChip(onClick = { onAdd(500) }, label = { Text("+500 ml") })
-        Text(
-            text = "Hydration: $drankMl / $targetMl ml",
-            style = MaterialTheme.typography.bodyMedium
-        )
+        Text("Hydration: $drankMl / $targetMl ml", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -59,11 +55,13 @@ private fun StopwatchCard() {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Stopwatch", style = MaterialTheme.typography.titleMedium)
-            Text(text = "%02d:%02d.%02d".format(
-                (elapsedMs / 1000) / 60,
-                (elapsedMs / 1000) % 60,
-                (elapsedMs % 1000) / 10
-            ))
+            Text(
+                "%02d:%02d.%02d".format(
+                    (elapsedMs / 1000) / 60,
+                    (elapsedMs / 1000) % 60,
+                    (elapsedMs % 1000) / 10
+                )
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = {
                     base = SystemClock.elapsedRealtime()
@@ -86,12 +84,10 @@ private fun HomeScreen() {
     var waterDrank by remember { mutableStateOf(0) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        ElevatedCard(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Quick note", style = MaterialTheme.typography.titleMedium)
                 OutlinedTextField(
@@ -107,7 +103,7 @@ private fun HomeScreen() {
             }
         }
 
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        ElevatedCard(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Hydration", style = MaterialTheme.typography.titleMedium)
                 Row(
