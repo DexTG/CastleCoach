@@ -69,7 +69,6 @@ implementation(composeBom)
 androidTestImplementation(composeBom)
 implementation(platform("androidx.health:health-bom:1.0.0-alpha05"))
 
-implementation("androidx.health.connect:connect-client")
 
 implementation("androidx.room:room-runtime:2.6.1")
 implementation("androidx.room:room-ktx:2.6.1")
