@@ -12,12 +12,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
+
 import androidx.health.connect.client.HealthConnectClient
-import androidx.health.connect.client.HealthPermission     // <-- alpha11
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission   // <-- correct for 1.x
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
+
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
