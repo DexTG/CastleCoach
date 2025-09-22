@@ -2,7 +2,9 @@ package com.castlecoach.app.health
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
@@ -15,6 +17,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.permissions.HealthPermission
+import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -22,32 +25,35 @@ import java.time.ZonedDateTime
 fun StepsCard() {
     val context = LocalContext.current
     val client = remember { HealthConnectClient.getOrCreate(context) }
+    val scope = rememberCoroutineScope()
 
-    // Health Connect permission string for steps
-    val readStepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
+    // Permission for reading steps
+    val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
+
     var hasPermission by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // Launcher to show the Health Connect permission UI
+    // Launcher for the Health Connect permission UI
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        // After the dialog closes, check again
-        hasPermission = runCatching {
-            readStepsPermission in client.permissionController.getGrantedPermissions()
-        }.getOrDefault(false)
+        // After the permissions UI closes, re-check permissions and, if granted, load steps
+        scope.launch {
+            hasPermission = runCatching {
+                stepsPermission in client.permissionController.getGrantedPermissions()
+            }.getOrDefault(false)
 
-        if (hasPermission) {
-            // re-load steps after permission granted
-            loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
+            if (hasPermission) {
+                loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
+            }
         }
     }
 
     // Initial permission check + load
     LaunchedEffect(Unit) {
         hasPermission = runCatching {
-            readStepsPermission in client.permissionController.getGrantedPermissions()
+            stepsPermission in client.permissionController.getGrantedPermissions()
         }.getOrDefault(false)
 
         if (hasPermission) {
@@ -56,19 +62,21 @@ fun StepsCard() {
     }
 
     ElevatedCard {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Text("Steps (today)")
+            Spacer(Modifier.height(4.dp))
 
             when {
                 !hasPermission -> {
                     Text("Connect Health Connect to show steps.")
+                    Spacer(Modifier.height(8.dp))
                     Button(onClick = {
-                        val intent = client.permissionController
-                            .createRequestPermissionIntent(setOf(readStepsPermission))
-                        permissionLauncher.launch(intent)
-                    }) {
-                        Text("Connect")
-                    }
+                        scope.launch {
+                            val intent = client.permissionController
+                                .createRequestPermissionIntent(setOf(stepsPermission))
+                            permissionLauncher.launch(intent)
+                        }
+                    }) { Text("Connect") }
                 }
                 error != null -> Text("Error: $error")
                 steps == null -> Text("Loading…")
@@ -97,6 +105,7 @@ private suspend fun loadTodaySteps(
                 )
             )
         )
+
         onResult(response.records.sumOf { it.count })
     } catch (t: Throwable) {
         onError(t.message ?: "Unknown error")
