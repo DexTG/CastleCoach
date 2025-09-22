@@ -26,17 +26,17 @@ import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
+
 @Composable
 fun StepsCard() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val hcAvailable = remember {
-        HealthConnectClient.getSdkStatus(
-            context,
-            HealthConnectClient.DEFAULT_PROVIDER_PACKAGE_NAME
-        ) == HealthConnectClient.SDK_AVAILABLE
+    val sdkStatus = remember {
+        HealthConnectClient.getSdkStatus(context, HEALTH_CONNECT_PACKAGE)
     }
+    val hcAvailable = sdkStatus == HealthConnectClient.SDK_AVAILABLE
 
     // Only create client if available
     val client = remember(hcAvailable) {
@@ -44,7 +44,8 @@ fun StepsCard() {
     }
 
     val stepsPermission = remember {
-        HealthPermission.getReadPermission(StepsRecord::class)
+        androidx.health.connect.client.permission.HealthPermission
+            .getReadPermission(StepsRecord::class)
     }
 
     var hasPermission by remember { mutableStateOf(false) }
@@ -81,9 +82,8 @@ fun StepsCard() {
                     Text("Health Connect isn’t installed on this device.")
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = {
-                        // Try to open Health Connect in Play Store
                         val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse("market://details?id=com.google.android.apps.healthdata")
+                            data = Uri.parse("market://details?id=$HEALTH_CONNECT_PACKAGE")
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                         runCatching { context.startActivity(intent) }
