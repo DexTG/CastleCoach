@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthPermission          // ✅ alpha11
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController // <- correct PermissionController
-import androidx.health.connect.client.permission.HealthPermission // <- 1.0.x path
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
