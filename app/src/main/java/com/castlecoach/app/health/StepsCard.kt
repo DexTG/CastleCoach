@@ -1,7 +1,6 @@
 package com.castlecoach.app.health
 
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -14,10 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.permission.HealthPermission // <- 1.0.x uses "permission" (singular)
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import androidx.health.connect.client.permissions.HealthPermission
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -31,20 +30,20 @@ fun StepsCard() {
     val hcAvailable = remember {
         HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
     }
+
     val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
 
     var hasPermission by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    // 1.0.x: use the permission result contract (no intent)
     val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        scope.launch {
-            hasPermission = runCatching {
-                stepsPermission in client.permissionController.getGrantedPermissions()
-            }.getOrDefault(false)
-            if (hasPermission) {
+        contract = androidx.health.connect.client.permission.PermissionController.createRequestPermissionResultContract()
+    ) { granted: Set<String> ->
+        hasPermission = stepsPermission in granted
+        if (hasPermission) {
+            scope.launch {
                 loadTodaySteps(client, onResult = { steps = it }, onError = { error = it })
             }
         }
@@ -72,11 +71,8 @@ fun StepsCard() {
                     Text("Connect Health Connect to show steps.")
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = {
-                        scope.launch {
-                            val intent = client.permissionController
-                                .createRequestPermissionIntent(setOf(stepsPermission))
-                            permissionLauncher.launch(intent)
-                        }
+                        // Launch the contract requesting this permission
+                        permissionLauncher.launch(setOf(stepsPermission))
                     }) { Text("Connect") }
                 }
                 error != null -> Text("Error: $error")
@@ -106,6 +102,7 @@ private suspend fun loadTodaySteps(
                 )
             )
         )
+
         onResult(response.records.sumOf { it.count })
     } catch (t: Throwable) {
         onError(t.message ?: "Unknown error")
