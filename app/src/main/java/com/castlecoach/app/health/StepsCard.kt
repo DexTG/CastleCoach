@@ -20,6 +20,7 @@ import androidx.health.connect.client.permissions.HealthPermission
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import androidx.compose.foundation.layout.padding
 
 @Composable
 fun StepsCard() {
