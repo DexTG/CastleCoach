@@ -29,38 +29,43 @@ private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
 @Composable
 fun StepsCard() {
     val context = LocalContext.current
-    val client = remember { HealthConnectClient.getOrCreate(context) }
     val scope = rememberCoroutineScope()
 
-    // Health Connect availability: check if the app is installed
- val hcAvailable = remember {
-    val pm = context.packageManager
-    try {
-        pm.getPackageInfo(HEALTH_CONNECT_PACKAGE, 0)
-        true
-    } catch (_: PackageManager.NameNotFoundException) {
-        false
+    val hcAvailable = remember {
+        val pm = context.packageManager
+        try {
+            pm.getPackageInfo("com.google.android.apps.healthdata", 0)
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
     }
-}
 
-    val stepsPermission = remember { HealthPermission.getReadPermission(StepsRecord::class) }
+    // Only create the client if available
+    val client = remember(hcAvailable) {
+        if (hcAvailable) runCatching { HealthConnectClient.getOrCreate(context) }.getOrNull()
+        else null
+    }
+
+    val stepsPermission = remember { 
+        androidx.health.connect.client.permission.HealthPermission.getReadPermission(StepsRecord::class)
+    }
 
     var hasPermission by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    // Request permissions (alpha11 uses the result contract API)
-val permissionLauncher = rememberLauncherForActivityResult<Set<String>, Set<String>>(
-    contract = PermissionController.createRequestPermissionResultContract()
-) { granted: Set<String> ->
-    hasPermission = stepsPermission in granted
-    if (hasPermission) {
-        scope.launch { loadTodaySteps(client, onResult = { steps = it }, onError = { error = it }) }
+    val permissionLauncher = rememberLauncherForActivityResult<Set<String>, Set<String>>(
+        contract = PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        hasPermission = stepsPermission in granted
+        if (hasPermission && client != null) {
+            scope.launch { loadTodaySteps(client, onResult = { steps = it }, onError = { error = it }) }
+        }
     }
-}
 
-    LaunchedEffect(Unit) {
-        if (hcAvailable) {
+    LaunchedEffect(hcAvailable, client) {
+        if (hcAvailable && client != null) {
             hasPermission = runCatching {
                 stepsPermission in client.permissionController.getGrantedPermissions()
             }.getOrDefault(false)
@@ -74,15 +79,13 @@ val permissionLauncher = rememberLauncherForActivityResult<Set<String>, Set<Stri
         Column(Modifier.padding(16.dp)) {
             Text("Steps (today)")
             Spacer(Modifier.height(4.dp))
-
             when {
                 !hcAvailable -> Text("Health Connect isn’t available on this device.")
+                client == null -> Text("Failed to initialize Health Connect client.")
                 !hasPermission -> {
                     Text("Connect Health Connect to show steps.")
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = {
-                        permissionLauncher.launch(setOf(stepsPermission))
-                    }) { Text("Connect") }
+                    Button(onClick = { permissionLauncher.launch(setOf(stepsPermission)) }) { Text("Connect") }
                 }
                 error != null -> Text("Error: $error")
                 steps == null -> Text("Loading…")
@@ -91,6 +94,7 @@ val permissionLauncher = rememberLauncherForActivityResult<Set<String>, Set<Stri
         }
     }
 }
+
 
 private suspend fun loadTodaySteps(
     client: HealthConnectClient,
