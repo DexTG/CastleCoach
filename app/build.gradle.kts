@@ -62,7 +62,7 @@ kapt("androidx.room:room-compiler:$room") // if using KAPT
 
 // Java Time backport for older devices (optional if minSdk >= 26)
 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-implementation("androidx.health.connect:connect-client:1.0.0")
+implementation("androidx.health.connect:connect-client:1.0.0-alpha11")
 
 val composeBom = platform("androidx.compose:compose-bom:2024.09.03")
 implementation(composeBom)
