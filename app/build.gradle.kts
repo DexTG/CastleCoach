@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.kapt") 
-    id("androidx.room")
+    kotlin("android")
+    id("org.jetbrains.kotlin.kapt")
+    id("androidx.room") version "2.6.1"
 }
 
 
