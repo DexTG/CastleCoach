@@ -3,7 +3,9 @@ package com.castlecoach.app.data
 import androidx.room.*
 import kotlinx.datetime.*
 
-enum class ItemType { WORKOUT, SNACK, MEAL, HYDRATE, NOTE }
+enum class ItemType {
+    MEAL, SNACK, HYDRATE, WORKOUT, WALK // <- add WALK if you use it
+}
 
 @Entity(tableName = "plan_items",
     indices = [Index(value = ["date", "timeMinutes"])]
