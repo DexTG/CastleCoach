@@ -74,17 +74,25 @@ fun StepsCard() {
             Text("Steps (today)")
             Spacer(Modifier.height(4.dp))
             when {
-                !hcAvailable -> Text("Health Connect isn’t available on this device.")
-                client == null -> Text("Failed to initialize Health Connect client.")
-                !hasPermission -> {
-                    Text("Connect Health Connect to show steps.")
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = { permissionLauncher.launch(setOf(stepsPermission)) }) { Text("Connect") }
-                }
-                error != null -> Text("Error: $error")
-                steps == null -> Text("Loading…")
-                else -> Text("$steps steps")
-            }
+    !hcAvailable -> {
+        Text("Health Connect isn’t installed on this device.")
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = { openHealthConnectInstall(context) }) {
+            Text("Install Health Connect")
+        }
+    }
+    !hasPermission -> {
+        Text("Connect Health Connect to show steps.")
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = { permissionLauncher.launch(setOf(stepsPermission)) }) {
+            Text("Connect")
+        }
+    }
+    error != null -> Text("Error: $error")
+    steps == null -> Text("Loading…")
+    else -> Text("$steps steps")
+}
+          
         }
     }
 }
