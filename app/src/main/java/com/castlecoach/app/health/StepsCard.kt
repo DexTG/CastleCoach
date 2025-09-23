@@ -36,7 +36,8 @@ fun StepsCard() {
     val sdkStatus = remember {
         HealthConnectClient.getSdkStatus(context, HEALTH_CONNECT_PACKAGE)
     }
-    val hcAvailable = sdkStatus == HealthConnectClient.SDK_AVAILABLE
+    val hcAvailable = HealthConnectClient.isProviderAvailable(context)
+
 
     // Only create client if available
     val client = remember(hcAvailable) {
@@ -53,8 +54,9 @@ fun StepsCard() {
     var error by remember { mutableStateOf<String?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = PermissionController.createRequestPermissionResultContract()
-    ) { granted: Set<String> ->
+    contract = PermissionController.createRequestPermissionResultContract()
+) { granted: Set<String> -> ... }
+ granted: Set<String> ->
         hasPermission = stepsPermission in granted
         if (hasPermission && client != null) {
             scope.launch { loadTodaySteps(client, { steps = it }, { error = it }) }
