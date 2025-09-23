@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.castlecoach.app.health.StepsCard
 import androidx.compose.ui.platform.LocalContext
+import com.castlecoach.app.health.StepsCard
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
