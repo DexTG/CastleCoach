@@ -1,43 +1,47 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.castlecoach.app">
 
+    <!-- Permissions you already use -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-<application
-android:name=".App"
-android:allowBackup="true"
-android:icon="@mipmap/ic_launcher"
-android:label="CastleCoach"
-android:roundIcon="@mipmap/ic_launcher_round"
-android:supportsRtl="true"
-android:theme="@style/Theme.Material3.DayNight.NoActionBar">
+    <!-- 🟣 REQUIRED for Health Connect on alpha11: allow package visibility -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
 
+    <application
+        android:name=".App"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="CastleCoach"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Material3.DayNight.NoActionBar">
 
-<activity
-android:name=".MainActivity"
-android:exported="true">
-<intent-filter>
-<action android:name="android.intent.action.MAIN" />
-<category android:name="android.intent.category.LAUNCHER" />
-</intent-filter>
-</activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
+        <!-- Boot receiver (as you had) -->
+        <receiver
+            android:name=".plan.BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
 
-<!-- app/src/main/AndroidManifest.xml inside <application> -->
-<receiver
-    android:name=".plan.BootReceiver"
-    android:enabled="true"
-    android:exported="false">
-    <intent-filter>
-        <action android:name="android.intent.action.BOOT_COMPLETED"/>
-        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-    </intent-filter>
-</receiver>
-
-
-
-<receiver
-android:name=".scheduler.AlarmReceiver"
-android:exported="false" />
-</application>
+        <!-- Alarm receiver (as you had) -->
+        <receiver
+            android:name=".scheduler.AlarmReceiver"
+            android:exported="false" />
+    </application>
 </manifest>
